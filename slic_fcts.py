@@ -62,14 +62,10 @@ class Cluster(object):
         self.pixels = []
 
 
-def get_slices(clusters, S, data):
-    cluster_pos = np.empty((len(clusters), 2))
-    for i, cluster in enumerate(clusters):
-        cluster_pos[i] = [cluster.h, cluster.w]
-
-    mat2 = np.ones((len(clusters), 4 * S, 4 * S, 5), dtype='float32')
+def get_slices(cluster_pos, S, data):
+    mat2 = np.ones((len(cluster_pos), 4 * S, 4 * S, 5), dtype='float32')
     xv, yv = np.meshgrid(np.arange(0, 4 * S), np.arange(0, 4 * S), indexing='ij')
-    for i in range(len(clusters)):
+    for i in range(len(cluster_pos)):
         temp_x = xv + cluster_pos[i, 0] - 2 * S
         temp_y = yv + cluster_pos[i, 1] - 2 * S
         temp_x = temp_x.astype(int)
@@ -80,8 +76,7 @@ def get_slices(clusters, S, data):
     return mat2
 
 
-def get_slices_d(clusters, S, M, data):
-    slices = get_slices(clusters, S, data)
+def get_slices_d(clusters, slices, S, M, data):
     cluster_pos = np.empty((len(clusters), 2))
     for i, cluster in enumerate(clusters):
         cluster_pos[i] = [cluster.h, cluster.w]
@@ -102,8 +97,7 @@ def get_slices_d(clusters, S, M, data):
     return slices_dist
 
 
-def get_slices_mask(clusters, S, M, data, image_height, image_width, border):
-    slices_d = get_slices_d(clusters, S, M, data)
+def get_slices_mask(slices_d, clusters, S, M, data, image_height, image_width, border):
     mat = np.ones((len(clusters), 4 * S, 4 * S), dtype=bool) * False
     temp_dis = np.full((image_height, image_width), -1.0)
     temp_dis[border:image_height - border, border:image_width - border] = np.inf
@@ -134,8 +128,7 @@ def get_slices_mask(clusters, S, M, data, image_height, image_width, border):
     return mat, temp_dis2
 
 
-def get_final_labels(clusters, S, M, data, image_height, image_width, border, D):
-    slices_mask, final_dis = get_slices_mask(clusters, S, M, data, image_height, image_width, border)
+def get_final_labels(slices_mask, final_dis, clusters, S, M, data, image_height, image_width, border, D):
     temp = np.ones(D.shape) * -1
     mask2 = np.full(D.shape, False, dtype=bool)
     for i, cluster in enumerate(clusters):
