@@ -76,12 +76,8 @@ def get_slices(cluster_pos, S, data):
     return mat2
 
 
-def get_slices_d(clusters, slices, S, M, data):
-    cluster_pos = np.empty((len(clusters), 2))
-    for i, cluster in enumerate(clusters):
-        cluster_pos[i] = [cluster.h, cluster.w]
-
-    clusters = np.empty((len(clusters), 5), dtype='float32')
+def get_slices_d(cluster_pos, slices, S, M, data):
+    clusters = np.empty((len(cluster_pos), 5), dtype='float32')
     clusters[:, 0] = cluster_pos[:, 0]
     clusters[:, 1] = cluster_pos[:, 1]
     cluster_pos = cluster_pos.astype(int)
@@ -97,23 +93,19 @@ def get_slices_d(clusters, slices, S, M, data):
     return slices_dist
 
 
-def get_slices_mask(slices_d, clusters, S, M, data, image_height, image_width, border):
-    mat = np.ones((len(clusters), 4 * S, 4 * S), dtype=bool) * False
+def get_slices_mask(slices_d, cluster_pos, S, M, data, image_height, image_width, border):
+    mat = np.ones((len(cluster_pos), 4 * S, 4 * S), dtype=bool) * False
     temp_dis = np.full((image_height, image_width), -1.0)
     temp_dis[border:image_height - border, border:image_width - border] = np.inf
 
-    temp_mat = np.ones((len(clusters), 4 * S, 4 * S), dtype=bool) * False
+    temp_mat = np.ones((len(cluster_pos), 4 * S, 4 * S), dtype=bool) * False
     temp_dis2 = np.full((image_height, image_width), -1.0)
     temp_dis2[border:image_height - border, border:image_width - border] = np.inf
-    dis_slices = np.empty((len(clusters), 4 * S, 4 * S))
-
-    cluster_pos = np.empty((len(clusters), 2))
-    for i, cluster in enumerate(clusters):
-        cluster_pos[i] = [cluster.h, cluster.w]
+    dis_slices = np.empty((len(cluster_pos), 4 * S, 4 * S))
 
     xv, yv = np.meshgrid(np.arange(0, 4 * S), np.arange(0, 4 * S), indexing='ij')
 
-    for i in range(len(clusters)):
+    for i in range(len(cluster_pos)):
         temp_x = xv + cluster_pos[i, 0] - 2 * S
         temp_y = yv + cluster_pos[i, 1] - 2 * S
         temp_x = temp_x.astype(int)
@@ -128,24 +120,46 @@ def get_slices_mask(slices_d, clusters, S, M, data, image_height, image_width, b
     return mat, temp_dis2
 
 
-def get_final_labels(slices_mask, final_dis, clusters, S, M, data, image_height, image_width, border, D):
+def get_final_labels(slices_mask, final_dis, cluster_pos0, S, M, data, image_height, image_width, border, D):
     temp = np.ones(D.shape) * -1
+    temp2 = np.ones(D.shape) * -1
+
     mask2 = np.full(D.shape, False, dtype=bool)
-    for i, cluster in enumerate(clusters):
+    mask3 = np.full(D.shape, False, dtype=bool)
+
+    # cluster_pos0 = np.empty((len(clusters), 2))
+    # for i, cluster in enumerate(clusters):
+    #     cluster_pos0[i] = [cluster.h, cluster.w]
+
+    for i in range(len(cluster_pos0)):
         mask = slices_mask[i]
-        mask2[cluster.h - 2 * S:cluster.h + 2 * S, cluster.w - 2 * S:cluster.w + 2 * S] = mask
-        temp[mask2] = int(i)
+        h = cluster_pos0[i,0]
+        w = cluster_pos0[i,1]
+        h = int(h)
+        w = int(w)
+        mask3[h - 2 * S:h + 2 * S, w - 2 * S:w + 2 * S] = mask
+        temp2[mask3] = int(i)
         # Reset
-        mask2[cluster.h - 2 * S:cluster.h + 2 * S, cluster.w - 2 * S:cluster.w + 2 * S] = False
-    return temp
+        mask3[h - 2 * S:h + 2 * S, w - 2 * S:w + 2 * S] = False
 
 
-def get_new_clusters(labels, clusters):
+    # for i, cluster in enumerate(clusters):
+    #     mask = slices_mask[i]
+    #     mask2[cluster.h - 2 * S:cluster.h + 2 * S, cluster.w - 2 * S:cluster.w + 2 * S] = mask
+    #     temp[mask2] = int(i)
+    #     # Reset
+    #     mask2[cluster.h - 2 * S:cluster.h + 2 * S, cluster.w - 2 * S:cluster.w + 2 * S] = False
+
+
+    return temp2
+
+
+def get_new_clusters(labels, clusters_pos):
     # temp = np.empty((len(self.new_clusters), 2), dtype=float)
-    temp = np.empty((len(clusters), 2), dtype=float)
+    temp = np.empty((len(clusters_pos), 2), dtype=float)
     # sub_labels = labels[self.border:self.image_height - self.border, self.border:self.image_width - self.border]
     # for i in range(len(self.new_clusters)):
-    for i in range(len(clusters)):
+    for i in range(len(clusters_pos)):
         mask = labels == i
         center_of_mass = np.mean(np.where(mask), axis=1, dtype=int)
         temp[i, :] = center_of_mass

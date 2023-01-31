@@ -102,37 +102,37 @@ class TestSLIC(unittest.TestCase):
 
     def test_slices_d_fct(self):
         slices = get_slices(self.cluster_pos0, self.S, self.data)
-        mat = get_slices_d(self.clusters, slices, self.S, self.M, self.data)
+        mat = get_slices_d(self.cluster_pos0, slices, self.S, self.M, self.data)
         np.testing.assert_allclose(self.test_slices_d, mat, rtol=1e-6, atol=1e-6)
 
     def test_slices_mask_fct(self):
         slices = get_slices(self.cluster_pos0, self.S, self.data)
-        slices_d =  get_slices_d(self.clusters, slices, self.S, self.M, self.data)
-        mat2, _ = get_slices_mask(slices_d, self.clusters, self.S, self.M, self.data, self.image_height, self.image_width, self.border)
+        slices_d =  get_slices_d(self.cluster_pos0, slices, self.S, self.M, self.data)
+        mat2, _ = get_slices_mask(slices_d, self.cluster_pos0, self.S, self.M, self.data, self.image_height, self.image_width, self.border)
         self.assertTrue((self.test_slices_mask == mat2).all())
 
     def test_dis_fct(self):
         mat = self.dis
         slices = get_slices(self.cluster_pos0, self.S, self.data)
-        slices_d =  get_slices_d(self.clusters, slices, self.S, self.M, self.data)
-        _, mat2 = get_slices_mask(slices_d, self.clusters, self.S, self.M, self.data, self.image_height, self.image_width, self.border)
+        slices_d =  get_slices_d(self.cluster_pos0, slices, self.S, self.M, self.data)
+        _, mat2 = get_slices_mask(slices_d, self.cluster_pos0, self.S, self.M, self.data, self.image_height, self.image_width, self.border)
         np.testing.assert_allclose(mat, mat2, rtol=1e-6, atol=1e-6)
 
     def test_final_labels_fct(self):
         mat = self.test_final_labels
         slices = get_slices(self.cluster_pos0, self.S, self.data)
-        slices_d =  get_slices_d(self.clusters, slices, self.S, self.M, self.data)
-        slices_mask, final_dis = get_slices_mask(slices_d, self.clusters, self.S, self.M, self.data, self.image_height, self.image_width, self.border)
-        mat2 = get_final_labels(slices_mask, final_dis, self.clusters, self.S, self.M, self.data, self.image_height, self.image_width, self.border, self.D)
+        slices_d =  get_slices_d(self.cluster_pos0, slices, self.S, self.M, self.data)
+        slices_mask, final_dis = get_slices_mask(slices_d, self.cluster_pos0, self.S, self.M, self.data, self.image_height, self.image_width, self.border)
+        mat2 = get_final_labels(slices_mask, final_dis, self.cluster_pos0, self.S, self.M, self.data, self.image_height, self.image_width, self.border, self.D)
         np.testing.assert_allclose(mat, mat2, rtol=1e-6, atol=1e-6)
 
     def test_new_clusters_fct(self):
         pos = self.clusters_pos
         slices = get_slices(self.cluster_pos0, self.S, self.data)
-        slices_d =  get_slices_d(self.clusters, slices, self.S, self.M, self.data)
-        slices_mask, final_dis = get_slices_mask(slices_d, self.clusters, self.S, self.M, self.data, self.image_height, self.image_width, self.border)
-        labels = get_final_labels(slices_mask, final_dis, self.clusters, self.S, self.M, self.data, self.image_height, self.image_width, self.border, self.D)
-        pos2 = get_new_clusters(labels, self.clusters)
+        slices_d = get_slices_d(self.cluster_pos0, slices, self.S, self.M, self.data)
+        slices_mask, final_dis = get_slices_mask(slices_d, self.cluster_pos0, self.S, self.M, self.data, self.image_height, self.image_width, self.border)
+        labels = get_final_labels(slices_mask, final_dis, self.cluster_pos0, self.S, self.M, self.data, self.image_height, self.image_width, self.border, self.D)
+        pos2 = get_new_clusters(labels, self.cluster_pos0)
         np.testing.assert_allclose(pos, pos2, rtol=1e-6, atol=1e-6)
 
 
