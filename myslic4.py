@@ -1,8 +1,3 @@
-# from myslic import *
-# from otherslic import *
-import time
-import unittest
-# from myslic import *
 import cv2
 import math
 import numpy as np
@@ -12,8 +7,9 @@ import copy
 from slic_fcts import *
 
 
-K = 40
-M = 50
+K = 500
+M = 60
+data_for_color = io.imread('parrot0.jpg')
 data = io.imread('parrot0.jpg')
 data = color.rgb2lab(data)
 image_height = data.shape[0]
@@ -30,6 +26,7 @@ for c in coord:
     c = Cluster(h_, w_, data[h_][w_][0], data[h_][w_][1], data[h_][w_][2])
     clusters.append(c)
 data = cv2.copyMakeBorder(data, border, border, border, border, cv2.BORDER_CONSTANT)
+data_for_color = cv2.copyMakeBorder(data_for_color, border, border, border, border, cv2.BORDER_CONSTANT)
 image_height = data.shape[0]
 image_width = data.shape[1]
 for c in clusters:
@@ -47,20 +44,25 @@ D[border:image_height - border, border:image_width - border] = np.inf
 LABEL = np.full((image_height, image_width), -1.0)
 clusters_temp = np.empty((clusters[0].cluster_index, 3))
 
-test_final_labels2 = get_final_labels(clusters, S, M, data, image_height, image_width, border, D)
-new_clusters = get_new_clusters(test_final_labels2, clusters)
+slices = get_slices(cluster_pos, S, data)
+slices_d = get_slices_d(cluster_pos, slices, S, M, data)
+slices_mask, final_dis = get_slices_mask(slices_d, cluster_pos, S, image_height, image_width, border)
+test_final_labels2 = get_final_labels(slices_mask, cluster_pos, S, D)
+new_clusters = get_new_clusters(test_final_labels2, cluster_pos)
 
+cluster_pos = new_clusters
 
+# Visualize
 image_arr = np.copy(data)
 colors_temp = np.empty((len(clusters), 3))
-for c in clusters:
-    colors_temp[c.no, :] = [c.l, c.a, c.b]
+cluster_viz = cluster_pos - border
+for i in range(len(cluster_pos)):
+    colors_temp[i, :] = data_for_color[int(cluster_pos[i, 0]), int(cluster_pos[i, 1]), :]
 
 temp = test_final_labels2[border:-border, border:-border]
 temp = temp.astype(int)
 image_arr = image_arr[border:-border, border:-border]
 image_arr = colors_temp[temp, :]
-image_arr = color.lab2rgb(image_arr)
-image_arr = image_arr * 255
+
 image_arr = image_arr.astype(dtype=np.uint8)
 
